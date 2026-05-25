@@ -1,0 +1,22 @@
+{
+  "name": "SENE Betting Predictor",
+  "short_name": "SENE Predictor",
+  "description": "AI Sports Betting Predictions for Football & Basketball",
+  "start_url": "/?utm_source=pwa",
+  "display": "standalone",
+  "background_color": "#0E1117",
+  "theme_color": "#00CC66",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/00CC66/ffffff?text=🏆",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/00CC66/ffffff?text=🏆",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
