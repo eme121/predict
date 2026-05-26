@@ -3,7 +3,9 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+base_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(base_dir, ".env")) # Local
+load_dotenv() # Deployed/System
 
 # API Configuration
 API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY")
