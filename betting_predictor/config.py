@@ -1,9 +1,14 @@
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # API Configuration
-API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY", "YOUR_API_FOOTBALL_KEY_HERE")
-ODDS_API_KEY = os.getenv("ODDS_API_KEY", "YOUR_ODDS_API_KEY_HERE")
+API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY")
+ODDS_API_KEY = os.getenv("ODDS_API_KEY")
+
 
 # ALL MAJOR FOOTBALL LEAGUES
 FOOTBALL_LEAGUES = {

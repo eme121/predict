@@ -35,3 +35,8 @@ betting_predictor/models/*.joblib
 # OS
 .DS_Store
 Thumbs.db
+
+# Secrets
+.env
+.env.*
+
