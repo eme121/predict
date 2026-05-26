@@ -24,7 +24,16 @@ class MLFootballPredictor:
         self.features = ['home_strength', 'away_strength', 'home_xg', 'away_xg', 'home_form', 'away_form']
         self.model_path = resolve_path(os.path.join('models', 'football_xgboost.pkl'))
         os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
+        self.load()
     
+    def load(self):
+        if os.path.exists(self.model_path):
+            try:
+                self.model = joblib.load(self.model_path)
+                print(f"✅ Football model loaded from {self.model_path}")
+            except Exception as e:
+                print(f"⚠️ Failed to load football model: {e}")
+
     def load_historical_data(self):
         data_path = resolve_path(os.path.join('data', 'football_historical.csv'))
         if not os.path.exists(data_path):
@@ -50,14 +59,15 @@ class MLFootballPredictor:
         y = df['target']
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=config.TEST_SIZE, random_state=config.RANDOM_STATE)
         
-        self.model = xgb.XGBClassifier(n_estimators=200, max_depth=6, learning_rate=0.05, random_state=config.RANDOM_STATE)
-        self.model.fit(X_train, y_train)
+        model = xgb.XGBClassifier(n_estimators=200, max_depth=6, learning_rate=0.05, random_state=config.RANDOM_STATE)
+        model.fit(X_train, y_train)
+        self.model = model
         print("✅ Football XGBoost trained successfully")
         joblib.dump(self.model, self.model_path)
         return self.model
     
     def predict(self, home_team, away_team):
-        if not self.model:
+        if self.model is None:
             self.train()
         data = pd.DataFrame([[1.6, 1.4, 1.7, 1.5, 1.5, 1.3]], columns=self.features)
         pred = self.model.predict_proba(data)[0]
@@ -70,6 +80,16 @@ class MLBasketballPredictor:
     def __init__(self):
         self.model = None
         self.model_path = resolve_path(os.path.join('models', 'basketball_xgboost.pkl'))
+        os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
+        self.load()
+
+    def load(self):
+        if os.path.exists(self.model_path):
+            try:
+                self.model = joblib.load(self.model_path)
+                print(f"✅ Basketball model loaded from {self.model_path}")
+            except Exception as e:
+                print(f"⚠️ Failed to load basketball model: {e}")
     
     def load_historical_data(self):
         data_path = resolve_path(os.path.join('data', 'basketball_historical.csv'))
@@ -86,14 +106,15 @@ class MLBasketballPredictor:
         df['target_over'] = (df['total_points'] > df['over_line']).astype(int)
         X = df[['home_off', 'away_def', 'pace_factor']]
         y = df['target_over']
-        self.model = xgb.XGBClassifier(n_estimators=150, max_depth=5, random_state=config.RANDOM_STATE)
-        self.model.fit(X, y)
+        model = xgb.XGBClassifier(n_estimators=150, max_depth=5, random_state=config.RANDOM_STATE)
+        model.fit(X, y)
+        self.model = model
         print("✅ Basketball XGBoost trained successfully")
         joblib.dump(self.model, self.model_path)
         return self.model
     
     def predict_over(self, home_team, away_team, over_line):
-        if not self.model:
+        if self.model is None:
             self.train()
         data = pd.DataFrame([[118, 112, 1.05]], columns=['home_off', 'away_def', 'pace_factor'])
         pred_prob = self.model.predict_proba(data)[0][1]
