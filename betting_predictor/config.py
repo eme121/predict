@@ -50,14 +50,11 @@ BANKROLL = 1000.0
 MIN_CONFIDENCE = 18.0
 
 # Paths
-DATA_DIR = "data"
-FOOTBALL_HISTORICAL = f"{DATA_DIR}/football_historical.csv"
-BASKETBALL_HISTORICAL = f"{DATA_DIR}/basketball_historical.csv"
-
-# ML Settings
-RANDOM_STATE = 42
-TEST_SIZE = 0.2
-MODELS_DIR = "models"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+FOOTBALL_HISTORICAL = os.path.join(DATA_DIR, "football_historical.csv")
+BASKETBALL_HISTORICAL = os.path.join(DATA_DIR, "basketball_historical.csv")
+MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 # Bot Settings
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")

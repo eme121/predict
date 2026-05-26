@@ -74,3 +74,40 @@ with tab1:
                 color = "orange" if analysis.get('status') == "IMPORTANT" else "red"
                 st.markdown(f":{color}[**{analysis.get('status')}**]: {analysis.get('reasoning')}")
                 st.success(f"**Verdict**: {analysis['recommended']}")
+
+with tab2:
+    st.subheader("⚽ Football Predictions")
+    league_filter = st.selectbox("Filter by League", ["All Leagues"] + list(config.FOOTBALL_LEAGUES.keys()))
+    
+    selected_league = None if league_filter == "All Leagues" else league_filter
+    football_all = get_fixtures("football", league=selected_league)
+    
+    if football_all.empty:
+        st.warning("No football matches found for the selected filter.")
+    else:
+        for _, match in football_all.iterrows():
+            analysis = analyzer.analyze_match(match.to_dict())
+            with st.expander(f"{match['home_team']} vs {match['away_team']} ({match['league']})"):
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Home Win", f"{analysis['home_win_prob']}%")
+                col2.metric("Over 2.5", f"{analysis['over_2_5_prob']}%")
+                col3.metric("Exp. Goals", f"{analysis.get('expected_goals')}")
+                st.info(f"Verdict: **{analysis['recommended']}**")
+
+with tab3:
+    st.subheader("🏀 Basketball Predictions")
+    bs_league_filter = st.selectbox("Filter by League ", ["All Leagues"] + list(config.BASKETBALL_LEAGUES.keys()))
+    
+    selected_bs_league = None if bs_league_filter == "All Leagues" else bs_league_filter
+    basketball_all = get_fixtures("basketball", league=selected_bs_league)
+    
+    if basketball_all.empty:
+        st.warning("No basketball matches found for the selected filter.")
+    else:
+        for _, match in basketball_all.iterrows():
+            analysis = analyzer.analyze_match(match.to_dict())
+            with st.expander(f"{match['home_team']} vs {match['away_team']} ({match.get('league', 'Pro')})"):
+                c1, c2 = st.columns(2)
+                c1.metric("Model Line", f"OVER {match['over_line']}")
+                c2.metric("Edge", f"{analysis['edge']}")
+                st.success(f"**Verdict**: {analysis['recommended']}")

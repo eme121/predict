@@ -55,6 +55,7 @@ class MLFootballPredictor:
     
     def train(self):
         df = self.load_historical_data()
+        self.team_stats = self.calculate_all_team_stats(df)
         X = df[self.features]
         y = df['target']
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=config.TEST_SIZE, random_state=config.RANDOM_STATE)
@@ -66,10 +67,37 @@ class MLFootballPredictor:
         joblib.dump(self.model, self.model_path)
         return self.model
     
+    def calculate_all_team_stats(self, df):
+        stats = {}
+        teams = pd.concat([df['home_team'], df['away_team']]).unique()
+        for team in teams:
+            team_games = df[(df['home_team'] == team) | (df['away_team'] == team)].tail(10)
+            if team_games.empty:
+                stats[team] = [1.5, 1.2, 1.6, 1.4, 1.4, 1.1] # Defaults
+                continue
+            
+            # Simple averages as proxy for strength/xg/form
+            avg_goals = (team_games.apply(lambda r: r['home_goals'] if r['home_team'] == team else r['away_goals'], axis=1)).mean()
+            xg = avg_goals * 1.1
+            form = (team_games.tail(3).apply(lambda r: r['home_goals'] if r['home_team'] == team else r['away_goals'], axis=1)).mean()
+            
+            stats[team] = [avg_goals, avg_goals*0.9, xg, xg*0.9, form, form*0.9]
+        return stats
+
     def predict(self, home_team, away_team):
         if self.model is None:
             self.train()
-        data = pd.DataFrame([[1.6, 1.4, 1.7, 1.5, 1.5, 1.3]], columns=self.features)
+        
+        if not hasattr(self, 'team_stats'):
+            self.team_stats = self.calculate_all_team_stats(self.load_historical_data())
+
+        h_stats = self.team_stats.get(home_team, [1.5, 1.2, 1.6, 1.4, 1.4, 1.1])
+        a_stats = self.team_stats.get(away_team, [1.4, 1.1, 1.5, 1.3, 1.3, 1.0])
+        
+        # Combine home stats for home team and away stats for away team
+        features_val = [h_stats[0], a_stats[1], h_stats[2], a_stats[3], h_stats[4], a_stats[5]]
+        
+        data = pd.DataFrame([features_val], columns=self.features)
         pred = self.model.predict_proba(data)[0]
         return {
             "home_win_prob": round(pred[1] * 100, 1),
@@ -103,6 +131,7 @@ class MLBasketballPredictor:
     
     def train(self):
         df = self.load_historical_data()
+        self.team_stats = self.calculate_all_team_stats(df)
         df['target_over'] = (df['total_points'] > df['over_line']).astype(int)
         X = df[['home_off', 'away_def', 'pace_factor']]
         y = df['target_over']
@@ -112,11 +141,36 @@ class MLBasketballPredictor:
         print("✅ Basketball XGBoost trained successfully")
         joblib.dump(self.model, self.model_path)
         return self.model
+
+    def calculate_all_team_stats(self, df):
+        stats = {}
+        teams = pd.concat([df['home_team'], df['away_team']]).unique()
+        for team in teams:
+            team_games = df[(df['home_team'] == team) | (df['away_team'] == team)].tail(10)
+            if team_games.empty:
+                stats[team] = {"off": 115, "def": 112, "pace": 1.0}
+                continue
+            
+            avg_off = (team_games.apply(lambda r: r['home_score'] if r['home_team'] == team else r['away_score'], axis=1)).mean()
+            avg_def = (team_games.apply(lambda r: r['away_score'] if r['home_team'] == team else r['home_score'], axis=1)).mean()
+            avg_pace = (team_games['total_points'] / 220).mean()
+            
+            stats[team] = {"off": avg_off, "def": avg_def, "pace": avg_pace}
+        return stats
     
     def predict_over(self, home_team, away_team, over_line):
         if self.model is None:
             self.train()
-        data = pd.DataFrame([[118, 112, 1.05]], columns=['home_off', 'away_def', 'pace_factor'])
+        
+        if not hasattr(self, 'team_stats'):
+            self.team_stats = self.calculate_all_team_stats(self.load_historical_data())
+
+        h_stats = self.team_stats.get(home_team, {"off": 115, "def": 112, "pace": 1.0})
+        a_stats = self.team_stats.get(away_team, {"off": 114, "def": 113, "pace": 1.0})
+        
+        features_val = [h_stats['off'], a_stats['def'], (h_stats['pace'] + a_stats['pace']) / 2]
+        
+        data = pd.DataFrame([features_val], columns=['home_off', 'away_def', 'pace_factor'])
         pred_prob = self.model.predict_proba(data)[0][1]
         return {
             "over_prob": round(pred_prob * 100, 1),

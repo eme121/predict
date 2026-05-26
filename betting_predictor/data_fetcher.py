@@ -147,31 +147,45 @@ def fetch_all_basketball_fixtures(league=None, date=None):
     return pd.DataFrame(all_matches)
 
 def generate_mock_football_matches(league_key, league_name):
-    teams = ["Team A", "Team B", "Team C"]
-    matches = []
-    for i in range(3):
-        matches.append({
-            "sport": "football",
-            "league": league_name,
-            "home_team": teams[i % 3],
-            "away_team": teams[(i + 1) % 3],
-            "date": datetime.now().strftime("%Y-%m-%d"),
-            "home_odds": 1.9,
-            "draw_odds": 3.4,
-            "away_odds": 3.8,
-        })
-    return matches
+    try:
+        df_hist = pd.read_csv(config.FOOTBALL_HISTORICAL)
+        teams = pd.concat([df_hist['home_team'], df_hist['away_team']]).unique()
+        import random
+        matches = []
+        for i in range(5):
+            h, a = random.sample(list(teams), 2)
+            matches.append({
+                "sport": "football",
+                "league": league_name,
+                "home_team": h,
+                "away_team": a,
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "home_odds": round(random.uniform(1.5, 4.0), 2),
+                "draw_odds": round(random.uniform(3.0, 4.5), 2),
+                "away_odds": round(random.uniform(2.0, 5.0), 2),
+            })
+        return matches
+    except:
+        return []
 
 def generate_mock_basketball_matches(league_key):
-    matches = []
-    matches.append({
-        "sport": "basketball",
-        "league": league_key,
-        "home_team": "Demo Home",
-        "away_team": "Demo Away",
-        "date": datetime.now().strftime("%Y-%m-%d"),
-        "over_line": 210.5,
-        "home_recent_totals": [100, 105],
-        "away_recent_totals": [110, 95]
-    })
-    return matches
+    try:
+        df_hist = pd.read_csv(config.BASKETBALL_HISTORICAL)
+        teams = pd.concat([df_hist['home_team'], df_hist['away_team']]).unique()
+        import random
+        matches = []
+        for i in range(3):
+            h, a = random.sample(list(teams), 2)
+            matches.append({
+                "sport": "basketball",
+                "league": league_key,
+                "home_team": h,
+                "away_team": a,
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "over_line": round(random.uniform(200, 230) * 2) / 2,
+                "home_recent_totals": [random.randint(90, 120) for _ in range(3)],
+                "away_recent_totals": [random.randint(90, 120) for _ in range(3)]
+            })
+        return matches
+    except:
+        return []
